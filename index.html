@@ -787,7 +787,6 @@
         let referralCount = 0;
         let quizCount = 0;
         let pendingSignupEmail = '';
-        let signupResendCooldownTimer = null;
 
         let currentSurvey = {
             questions: [],
@@ -1050,7 +1049,6 @@
                 return;
             }
 
-            startSignupResendCooldown();
             try {
                 const { error } = await supabaseClient.auth.resend({ type: 'signup', email });
                 if (error) throw error;
@@ -1064,34 +1062,12 @@
         function getAuthErrorMessage(error) {
             const message = error && error.message ? error.message : String(error);
             if (/email.*rate|rate.*email/i.test(message)) {
-                return 'Supabase has temporarily limited confirmation emails. Wait before trying again. Its built-in email service allows only a small number of emails; configure custom SMTP in Supabase Authentication > SMTP Settings for production.';
+                return 'Supabase has temporarily limited confirmation emails. This app does not set an email limit. Wait for the quota to reset, then configure a custom SMTP provider and review Supabase Auth email rate limits. Your SMTP provider may also enforce sending limits.';
             }
             if (error && (error.status === 429 || /too many requests|rate limit/i.test(message))) {
                 return 'Supabase has temporarily limited authentication requests. Wait a few minutes before trying again.';
             }
             return message;
-        }
-
-        function startSignupResendCooldown() {
-            const button = document.getElementById('resend-signup-code');
-            let secondsRemaining = 60;
-            if (signupResendCooldownTimer) clearInterval(signupResendCooldownTimer);
-
-            button.disabled = true;
-            button.classList.add('opacity-50', 'cursor-not-allowed');
-            button.innerText = `Resend code in ${secondsRemaining}s`;
-            signupResendCooldownTimer = setInterval(() => {
-                secondsRemaining -= 1;
-                if (secondsRemaining <= 0) {
-                    clearInterval(signupResendCooldownTimer);
-                    signupResendCooldownTimer = null;
-                    button.disabled = false;
-                    button.classList.remove('opacity-50', 'cursor-not-allowed');
-                    button.innerText = 'Resend confirmation code';
-                    return;
-                }
-                button.innerText = `Resend code in ${secondsRemaining}s`;
-            }, 1000);
         }
 
         async function handleLogin(e) {
