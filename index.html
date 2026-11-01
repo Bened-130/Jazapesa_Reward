@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JazaPesa - Practice Quizzes and Account Tools</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#16a34a',
+                            600: '#15803d',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        },
+                        amber: {
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-white">
+
+    <!-- TOP HEADER -->
+    <header class="sticky top-0 z-40 bg-slate-900 text-white shadow-md border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            
+            <!-- Logo -->
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="navigateTo('dashboard')">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-amber-400 flex items-center justify-center text-white font-black text-xl shadow-lg">
+                    <i class="fa-solid me-0.5 fa-shield-halved"></i> J
+                </div>
+                <div>
+                    <span class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-emerald-400 to-amber-300 bg-clip-text text-transparent">JazaPesa</span>
+                    <span class="text-xs text-amber-400 font-semibold block -mt-1 tracking-widest uppercase">Practice & Rewards</span>
+                </div>
+            </div>
+
+            <!-- Header Balance & Streak Bar -->
+            <div id="header-user-stats" class="hidden md:flex items-center space-x-3">
+                <div class="bg-slate-800 border border-slate-700/80 rounded-full px-3 py-1 flex items-center space-x-2 text-xs font-medium">
+                    <span class="text-amber-400"><i class="fa-solid fa-fire text-sm animate-bounce"></i></span>
+                    <span class="text-slate-300">Practice sessions: <strong id="header-streak-count" class="text-amber-400 font-bold">0</strong></span>
+                </div>
+                <div class="bg-slate-800 border border-emerald-500/30 rounded-full px-3 py-1.5 flex items-center space-x-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span class="text-xs text-slate-400">Wallet:</span>
+                    <span class="text-emerald-400 font-extrabold text-sm" id="header-balance">KES 0</span>
+                </div>
+            </div>
+
+            <!-- Action Buttons & Admin Switch -->
+            <div class="flex items-center space-x-3">
+                <div id="auth-buttons-unauth" class="flex items-center space-x-2">
+                    <button onclick="openModal('login-modal')" class="text-xs sm:text-sm text-slate-300 hover:text-white font-medium px-3 py-1.5 transition">Login</button>
+                    <button onclick="openModal('register-modal')" class="text-xs sm:text-sm bg-brand-600 hover:bg-brand-700 text-white font-semibold px-4 py-1.5 rounded-lg shadow transition">Register</button>
+                </div>
+
+                <div id="auth-buttons-auth" class="hidden flex items-center space-x-3">
+                    <div class="relative group">
+                        <button class="flex items-center space-x-2 bg-slate-800 hover:bg-slate-700 p-1.5 rounded-lg border border-slate-700 transition">
+                            <div class="w-7 h-7 rounded-full bg-brand-600 text-white flex items-center justify-center font-bold text-xs" id="user-avatar-text">U</div>
+                            <span class="text-xs font-semibold text-slate-200 hidden lg:inline" id="header-username">User</span>
+                            <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
+                        </button>
+                        <div class="absolute right-0 mt-2 w-48 bg-slate-800 border border-slate-700 rounded-xl shadow-xl hidden group-hover:block z-50 py-1">
+                            <div class="px-4 py-2 border-b border-slate-700 text-xs">
+                                <p class="text-slate-400">Signed in as</p>
+                                <p class="font-semibold text-slate-200 truncate" id="dropdown-user-email">user@example.com</p>
+                            </div>
+                            <button onclick="navigateTo('dashboard')" class="w-full text-left px-4 py-2 text-xs text-slate-300 hover:bg-slate-700/50 flex items-center space-x-2">
+                                <i class="fa-solid fa-chart-pie text-brand-500"></i><span>Dashboard</span>
+                            </button>
+                            <button onclick="logout()" class="w-full text-left px-4 py-2 text-xs text-rose-400 hover:bg-slate-700/50 flex items-center space-x-2 border-t border-slate-700/50">
+                                <i class="fa-solid fa-arrow-right-from-bracket"></i><span>Log Out</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <button onclick="toggleMobileMenu()" class="md:hidden text-slate-300 hover:text-white focus:outline-none p-1">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- MAIN NAVIGATION TABS (DESKTOP) -->
+        <nav id="main-nav-tabs" class="bg-slate-950 border-t border-slate-800/80 px-4 hidden md:block">
+            <div class="max-w-7xl mx-auto flex space-x-1 text-sm font-medium">
+                <button onclick="navigateTo('dashboard')" id="nav-btn-dashboard" class="nav-tab text-brand-400 border-b-2 border-brand-500 px-4 py-3 flex items-center space-x-2 transition">
+                    <i class="fa-solid fa-house"></i><span>Dashboard</span>
+                </button>
+                <button onclick="navigateTo('surveys')" id="nav-btn-surveys" class="nav-tab text-slate-400 hover:text-slate-200 border-b-2 border-transparent px-4 py-3 flex items-center space-x-2 transition">
+                    <i class="fa-solid fa-clipboard-list"></i><span>Practice Quizzes</span>
+                    <span class="bg-brand-500/20 text-brand-400 text-[10px] font-bold px-1.5 py-0.5 rounded-full">Practice</span>
+                </button>
+                <button onclick="navigateTo('referrals')" id="nav-btn-referrals" class="nav-tab text-slate-400 hover:text-slate-200 border-b-2 border-transparent px-4 py-3 flex items-center space-x-2 transition">
+                    <i class="fa-solid fa-users"></i><span>Referrals</span>
+                </button>
+                <button onclick="navigateTo('withdrawals')" id="nav-btn-withdrawals" class="nav-tab text-slate-400 hover:text-slate-200 border-b-2 border-transparent px-4 py-3 flex items-center space-x-2 transition">
+                    <i class="fa-solid fa-wallet"></i><span>Withdrawals</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- MOBILE NAV DRAWER -->
+        <div id="mobile-menu" class="hidden md:hidden bg-slate-900 border-b border-slate-800 px-4 pt-2 pb-4 space-y-2">
+            <div id="mobile-user-stats" class="py-2 border-b border-slate-800 flex justify-between items-center text-xs">
+                <span class="text-slate-400">Practice sessions: <strong id="mobile-streak-count" class="text-amber-400">0</strong></span>
+                <span class="text-slate-400">Wallet: <strong id="mobile-balance" class="text-emerald-400">KES 0</strong></span>
+            </div>
+            <button onclick="navigateTo('dashboard'); toggleMobileMenu();" class="w-full text-left py-2 px-3 rounded-lg text-slate-300 hover:bg-slate-800 flex items-center space-x-3">
+                <i class="fa-solid fa-house w-5 text-brand-500"></i><span>Dashboard</span>
+            </button>
+            <button onclick="navigateTo('surveys'); toggleMobileMenu();" class="w-full text-left py-2 px-3 rounded-lg text-slate-300 hover:bg-slate-800 flex items-center space-x-3">
+                <i class="fa-solid fa-clipboard-list w-5 text-brand-500"></i><span>Practice Quizzes</span>
+            </button>
+            <button onclick="navigateTo('referrals'); toggleMobileMenu();" class="w-full text-left py-2 px-3 rounded-lg text-slate-300 hover:bg-slate-800 flex items-center space-x-3">
+                <i class="fa-solid fa-users w-5 text-brand-500"></i><span>Referral Hub</span>
+            </button>
+            <button onclick="navigateTo('withdrawals'); toggleMobileMenu();" class="w-full text-left py-2 px-3 rounded-lg text-slate-300 hover:bg-slate-800 flex items-center space-x-3">
+                <i class="fa-solid fa-wallet w-5 text-brand-500"></i><span>Withdraw Funds</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none max-w-sm w-full"></div>
+
+    <!-- MAIN APP CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
+
+        <div id="backend-status" class="hidden mb-6 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900"></div>
+
+        <!-- VIEW 1: DASHBOARD -->
+        <section id="view-dashboard" class="space-y-6">
+            <div class="bg-slate-900 rounded-3xl p-6 md:p-8 text-white relative overflow-hidden shadow-xl border border-slate-800">
+                <div class="relative z-10 max-w-2xl">
+                    <span class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-xs text-amber-400 font-medium mb-3">
+                        <i class="fa-solid fa-sparkles"></i> <span>Practice quizzes and verified account tools</span>
+                    </span>
+                    <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white">
+                        Welcome back, <span id="dash-user-name" class="text-emerald-400">Member</span>! 👋
+                    </h1>
+                    <p class="text-slate-300 mt-2 text-sm sm:text-base leading-relaxed">
+                        Practice with general-knowledge quizzes, invite friends to join for free, and review your wallet activity.
+                    </p>
+                    <div class="mt-6 flex flex-wrap gap-3">
+                        <button onclick="navigateTo('surveys')" class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition flex items-center space-x-2 text-sm">
+                            <i class="fa-solid fa-play text-xs"></i><span>Start Practicing</span>
+                        </button>
+                        <button onclick="navigateTo('referrals')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold px-5 py-2.5 rounded-xl transition text-sm flex items-center space-x-2">
+                            <i class="fa-solid fa-share-nodes text-amber-400"></i><span>Invite Friends</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Available Balance</span>
+                        <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-lg">
+                            <i class="fa-solid fa-wallet"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <span class="text-2xl sm:text-3xl font-extrabold text-slate-900" id="dash-balance">KES 0</span>
+                        <p class="text-xs text-slate-500 mt-1 flex items-center space-x-1">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-[10px]"></i>
+                            <span>No payment is required to request an available payout.</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Practice Sessions</span>
+                        <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center font-bold text-lg">
+                            <i class="fa-solid fa-fire"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <span class="text-2xl sm:text-3xl font-extrabold text-slate-900" id="dash-streak">0 Days</span>
+                        <p class="text-xs text-slate-500 mt-1 flex items-center space-x-1">
+                            <i class="fa-solid fa-coins text-amber-500 text-[10px]"></i>
+                            <span>Practice streak only; no cash is generated in this demo.</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Quiz Sessions</span>
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-lg">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <span class="text-2xl sm:text-3xl font-extrabold text-slate-900" id="dash-completed-tasks">0</span>
+                        <p class="text-xs text-slate-500 mt-1">Practice quizzes completed this session</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Referred Signups</span>
+                        <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-lg">
+                            <i class="fa-solid fa-user-plus"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="flex items-baseline space-x-1">
+                            <span class="text-2xl sm:text-3xl font-extrabold text-slate-900" id="dash-active-referrals">0</span>
+                            <span class="text-xs text-slate-400 font-semibold">registered</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">Real account signups linked to your referral code</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ledger History Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-lg font-bold text-slate-900 flex items-center space-x-2">
+                                <i class="fa-solid fa-bolt text-amber-500"></i>
+                                <span>Practice Quiz Library</span>
+                            </h2>
+                            <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-full">Practice only</span>
+                        </div>
+                        <p class="text-sm text-slate-600 leading-relaxed">
+                            Each practice session has five multiple-choice questions. Quiz scores do not create or promise money.
+                        </p>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+                        <span class="text-xs text-slate-500 font-medium">General-knowledge questions</span>
+                        <button onclick="navigateTo('surveys')" class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-5 py-2.5 rounded-xl shadow transition text-sm flex items-center space-x-2">
+                            <span>Launch Survey Engine</span>
+                            <i class="fa-solid fa-arrow-right text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center space-x-2">
+                            <i class="fa-solid fa-clock-rotate-left text-brand-600"></i>
+                            <span>Recent Wallet Activity</span>
+                        </h2>
+                        <div id="dash-recent-ledger" class="space-y-3 max-h-56 overflow-y-auto pr-1 custom-scrollbar"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 2: SURVEYS ENGINE -->
+        <section id="view-surveys" class="hidden space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <div>
+                    <h1 class="text-2xl font-black text-slate-900 flex items-center gap-2">
+                        <span>Practice Quiz Portal</span>
+                    </h1>
+                    <p class="text-sm text-slate-600 mt-1">Answer five general-knowledge questions. This practice quiz does not pay cash.</p>
+                </div>
+            </div>
+
+            <div id="survey-active-card" class="bg-white rounded-2xl border border-slate-200 shadow-lg p-6 sm:p-8">
+                <!-- State 1: Locked -->
+                <div id="survey-locked-state" class="hidden text-center py-12 px-4 max-w-md mx-auto">
+                    <div class="w-16 h-16 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center font-bold text-2xl mx-auto mb-4">
+                        <i class="fa-solid fa-lock"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900">Sign in to start practicing</h3>
+                    <p class="text-sm text-slate-600 mt-2">Creating an account is free. Never pay an activation fee to access this practice quiz.</p>
+                    <button onclick="openModal('login-modal')" class="mt-6 w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl shadow transition text-sm">Sign in</button>
+                </div>
+
+                <!-- State 2: Ready -->
+                <div id="survey-ready-state" class="text-center py-10 px-4 max-w-lg mx-auto">
+                    <div class="w-16 h-16 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center font-bold text-2xl mx-auto mb-4">
+                        <i class="fa-solid fa-brain"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900">Ready for Practice Session #<span id="survey-session-id">1</span></h3>
+                    <button onclick="startSurveySession()" class="mt-6 w-full bg-brand-600 hover:bg-brand-700 text-white font-extrabold py-3.5 rounded-xl shadow-lg transition text-base">Begin Practice &rarr;</button>
+                </div>
+
+                <!-- State 3: Active Quiz -->
+                <div id="survey-session-state" class="hidden space-y-6">
+                    <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                        <div>
+                            <span class="text-xs font-bold text-brand-600 uppercase">Question <span id="survey-current-q-num">1</span> of 5</span>
+                            <h4 id="survey-q-category" class="text-xs text-slate-400 font-medium">Category</h4>
+                        </div>
+                        <div class="w-36 bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                            <div id="survey-progress-bar" class="bg-brand-600 h-2.5 rounded-full transition-all duration-300" style="width: 20%"></div>
+                        </div>
+                    </div>
+                    <h2 id="survey-q-text" class="text-lg sm:text-xl font-bold text-slate-900">Loading...</h2>
+                    <div id="survey-options-container" class="grid grid-cols-1 gap-3"></div>
+                    <div class="pt-6 border-t border-slate-100 flex items-center justify-between">
+                        <button onclick="prevQuestion()" id="survey-prev-btn" class="text-xs font-semibold text-slate-500 border border-slate-200 px-4 py-2 rounded-lg" disabled>&larr; Previous</button>
+                        <button onclick="nextQuestion()" id="survey-next-btn" class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm">Next Question &rarr;</button>
+                    </div>
+                </div>
+
+                <!-- State 4: Results -->
+                <div id="survey-result-state" class="hidden space-y-6">
+                    <div id="survey-result-banner" class="p-6 rounded-2xl text-center space-y-2"></div>
+                    <div id="survey-review-container" class="space-y-4 max-h-96 overflow-y-auto pr-2 custom-scrollbar"></div>
+                    <button onclick="startNewSurvey()" class="w-full bg-brand-600 text-white font-bold py-3 rounded-xl">Try Another Task</button>
+                </div>
+            </div>
+        </section>
+                <!-- VIEW 3: REFERRAL HUB -->
+        <section id="view-referrals" class="hidden space-y-6">
+            <div class="bg-slate-900 rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-xl">
+                <h1 class="text-2xl font-extrabold">Referral Hub</h1>
+                <p class="text-slate-300 text-sm mt-2">Share your link to invite people to join for free. Signups are counted after a real account is created; no payment is required.</p>
+                
+                <div class="mt-6 bg-slate-800 border border-slate-700 p-3 rounded-2xl flex flex-col sm:flex-row items-center gap-2">
+                    <div class="flex-1 text-xs font-mono bg-slate-950 px-3 py-2.5 rounded-xl text-amber-300 truncate w-full" id="ref-link-display">https://jazapesa.co.ke/register?ref=CODE</div>
+                    <div class="flex items-center space-x-2 w-full sm:w-auto">
+                        <button onclick="copyReferralLink()" class="flex-1 sm:flex-none bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold px-5 py-2.5 rounded-xl text-xs transition">Copy Link</button>
+                        <button onclick="shareWhatsApp()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2.5 rounded-xl text-xs"><i class="fa-brands fa-whatsapp text-base"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Overview -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200">
+                    <span class="text-xs text-slate-500 uppercase font-semibold">Total Signups</span>
+                    <h3 class="text-2xl font-black text-slate-900 mt-1" id="ref-stat-total">0</h3>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200">
+                    <span class="text-xs text-slate-500 uppercase font-semibold">Fee to Join</span>
+                    <h3 class="text-2xl font-black text-emerald-600 mt-1">Free</h3>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200">
+                    <span class="text-xs text-slate-500 uppercase font-semibold">Referral Bonuses</span>
+                    <h3 class="text-sm font-bold text-amber-500 mt-2" id="ref-stat-earned">Only posted after verified activity</h3>
+                </div>
+            </div>
+
+            <div class="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+                Referral bonuses are not generated by browser actions or signup payments. Any future bonus must be funded and posted by a trusted server after its qualification is verified.
+            </div>
+        </section>
+
+        <!-- VIEW 4: WITHDRAWALS -->
+        <section id="view-withdrawals" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <h1 class="text-2xl font-black text-slate-900">Withdraw Earnings</h1>
+                <p class="text-sm text-slate-600">Payout requests use your available wallet balance. There is no fee to release or withdraw a payout.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Eligibility Criteria -->
+                <div class="lg:col-span-1 bg-white p-6 rounded-2xl border border-slate-200 space-y-5 shadow-sm">
+                    <h2 class="font-bold text-slate-900 text-lg border-b pb-3">Available Wallet Balance</h2>
+                    
+                    <div>
+                        <div class="flex justify-between text-xs font-semibold mb-1">
+                            <span>Available balance</span>
+                            <span id="with-crit-bal-label" class="text-slate-600">KES 0</span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                            <div id="with-crit-bal-bar" class="bg-emerald-500 h-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-xs font-semibold mb-1">
+                            <span id="with-crit-ref-label" class="text-slate-600">No fees</span>
+                        </div>
+                        <div id="with-status-alert" class="p-3.5 rounded-xl text-xs font-medium bg-blue-50 text-blue-800 border border-blue-200 flex items-start space-x-2">
+                            <i class="fa-solid fa-circle-info text-blue-500 mt-0.5"></i>
+                            <span>Only verified wallet credits can be paid out. Never send money to unlock a payout.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Request Form -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                    <h2 class="font-bold text-slate-900 text-lg border-b pb-3">Request Payout</h2>
+                    
+                    <form id="withdrawal-form" onsubmit="handleWithdrawalSubmit(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Payout Method</label>
+                            <select id="with-method" class="w-full p-3 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none" onchange="togglePayoutFields()">
+                                <option value="mpesa">M-Pesa Mobile Money</option>
+                                <option value="bank">Bank Transfer</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Withdrawal Amount (KES)</label>
+                            <input type="number" id="with-amount" min="1" step="1" placeholder="Amount in KES" class="w-full p-3 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none" required>
+                        </div>
+
+                        <div id="with-mpesa-field">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">M-Pesa Phone Number</label>
+                            <input type="text" id="with-phone" placeholder="0712345678" class="w-full p-3 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none">
+                        </div>
+
+                        <div id="with-bank-fields" class="hidden space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Select Bank</label>
+                                <select id="with-bank-name" class="w-full p-3 text-sm bg-slate-50 border border-slate-300 rounded-xl outline-none">
+                                    <option value="Equity Bank">Equity Bank</option>
+                                    <option value="KCB Bank">KCB Bank</option>
+                                    <option value="Co-operative Bank">Co-operative Bank</option>
+                                    <option value="NCBA Bank">NCBA Bank</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Account Number</label>
+                                <input type="text" id="with-account-num" placeholder="1234567890" class="w-full p-3 text-sm bg-slate-50 border border-slate-300 rounded-xl outline-none">
+                            </div>
+                        </div>
+
+                        <button type="submit" id="with-submit-btn" class="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl shadow transition text-sm">
+                            Submit Withdrawal Request
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 5: ADMIN PANEL -->
+        <section id="view-admin" class="hidden space-y-6">
+            <div class="bg-slate-900 text-white p-6 rounded-2xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-black flex items-center gap-2">
+                        <i class="fa-solid fa-user-shield text-amber-400"></i>
+                        <span>Admin Backoffice</span>
+                    </h1>
+                    <p class="text-xs text-slate-300 mt-1">Platform management, audit logs, withdrawal processing, and question bank editor.</p>
+                </div>
+            </div>
+
+            <!-- Admin Overview Metrics -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200">
+                    <span class="text-xs text-slate-500 font-semibold uppercase">Reward credits (server-managed)</span>
+                    <h3 class="text-2xl font-extrabold text-slate-900 mt-1" id="admin-stat-rev">KES 0</h3>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200">
+                    <span class="text-xs text-slate-500 font-semibold uppercase">Registered Users</span>
+                    <h3 class="text-2xl font-extrabold text-slate-900 mt-1" id="admin-stat-users">0</h3>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200">
+                    <span class="text-xs text-slate-500 font-semibold uppercase">Pending Withdrawals</span>
+                    <h3 class="text-2xl font-extrabold text-amber-500 mt-1" id="admin-stat-pending-with">0</h3>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200">
+                    <span class="text-xs text-slate-500 font-semibold uppercase">Active Question Bank</span>
+                    <h3 class="text-2xl font-extrabold text-emerald-600 mt-1" id="admin-stat-q-count">0</h3>
+                </div>
+            </div>
+
+            <!-- Admin Tabs -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="flex border-b border-slate-200 text-sm font-semibold bg-slate-50">
+                    <button onclick="switchAdminTab('withdrawals')" id="admin-tab-withdrawals" class="px-6 py-3.5 border-b-2 border-brand-600 text-brand-600">Withdrawal Requests</button>
+                    <button onclick="switchAdminTab('users')" id="admin-tab-users" class="px-6 py-3.5 border-b-2 border-transparent text-slate-600">User Ledger</button>
+                    <button onclick="switchAdminTab('questions')" id="admin-tab-questions" class="px-6 py-3.5 border-b-2 border-transparent text-slate-600">Question Bank</button>
+                </div>
+
+                <!-- Admin Tab 1: Withdrawals -->
+                <div id="admin-subview-withdrawals" class="p-6">
+                    <h3 class="font-bold text-slate-900 mb-4">Pending Payout Requests</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-600">
+                            <thead class="bg-slate-100 uppercase text-slate-500 font-bold">
+                                <tr>
+                                    <th class="p-3">User Details</th>
+                                    <th class="p-3">Amount</th>
+                                    <th class="p-3">Active Referrals</th>
+                                    <th class="p-3">Payout Info</th>
+                                    <th class="p-3">Date</th>
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-withdrawal-table" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Admin Tab 2: Users -->
+                <div id="admin-subview-users" class="hidden p-6">
+                    <h3 class="font-bold text-slate-900 mb-4">Registered User Accounts</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-600">
+                            <thead class="bg-slate-100 uppercase text-slate-500 font-bold">
+                                <tr>
+                                    <th class="p-3">Full Name</th>
+                                    <th class="p-3">Email & Phone</th>
+                                    <th class="p-3">Activation</th>
+                                    <th class="p-3">Balance</th>
+                                    <th class="p-3">Active Referrals</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-users-table" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Admin Tab 3: Questions -->
+                <div id="admin-subview-questions" class="hidden p-6 space-y-6">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-slate-900">Manage Survey Questions</h3>
+                        <button onclick="openModal('add-q-modal')" class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-4 py-2 rounded-xl text-xs">+ Add Question</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-600">
+                            <thead class="bg-slate-100 uppercase text-slate-500 font-bold">
+                                <tr>
+                                    <th class="p-3">Category</th>
+                                    <th class="p-3">Question Prompt</th>
+                                    <th class="p-3">Correct Answer</th>
+                                    <th class="p-3">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-questions-table" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER & LEGAL -->
+    <footer class="bg-slate-900 text-slate-400 py-8 border-t border-slate-800 text-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4 text-center sm:text-left sm:flex sm:items-center sm:justify-between">
+            <div>
+                <p class="text-slate-200 font-bold text-sm">JazaPesa Rewards Kenya</p>
+                <p class="text-slate-500 mt-1">&copy; 2026 JazaPesa. Payout processing is not integrated.</p>
+            </div>
+            <div class="flex flex-wrap justify-center sm:justify-end gap-4 text-slate-400">
+                <button onclick="openModal('modal-terms')" class="hover:text-amber-400 transition">Terms of Service</button>
+                <button onclick="openModal('modal-privacy')" class="hover:text-amber-400 transition">Privacy Policy</button>
+                <button onclick="openModal('modal-refund')" class="hover:text-amber-400 transition">Fees & Payouts</button>
+                <button onclick="openModal('modal-disclosure')" class="hover:text-amber-400 transition">Earnings Disclosure</button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL 1: REGISTER -->
+    <div id="register-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative">
+            <button onclick="closeModal('register-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <h2 class="text-xl font-black text-slate-900">Create JazaPesa Account</h2>
+            <p class="text-xs text-slate-500 mt-1">Registration is free. You must be 18 or older and confirm your email with a code.</p>
+
+            <form onsubmit="handleRegister(event)" class="mt-4 space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Full Name</label>
+                    <input type="text" id="reg-name" required placeholder="e.g. Jane Wanjiku" class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Email Address</label>
+                    <input type="email" id="reg-email" required placeholder="jane@example.com" class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">M-Pesa Phone Number</label>
+                    <input type="text" id="reg-phone" required placeholder="0712345678" class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1" for="reg-birth-year">Year of Birth</label>
+                    <input type="number" id="reg-birth-year" required min="1900" step="1" inputmode="numeric" placeholder="e.g. 1995" aria-describedby="reg-age-note" class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none">
+                    <p id="reg-age-note" class="text-[11px] text-slate-500 mt-1">You must be at least 18. Because we ask only for your birth year, the check uses a conservative cutoff.</p>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Password</label>
+                    <input type="password" id="reg-password" required placeholder="••••••••" class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Referral Code (Optional)</label>
+                    <input type="text" id="reg-refcode" placeholder="e.g. JP1234" class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl shadow transition text-xs mt-2">Register & Continue &rarr;</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: LOGIN -->
+    <div id="login-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative">
+            <button onclick="closeModal('login-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <h2 class="text-xl font-black text-slate-900">Welcome Back</h2>
+            <p class="text-xs text-slate-500 mt-1">Sign in directly with your email address and password.</p>
+
+            <form onsubmit="handleLogin(event)" class="mt-4 space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Email Address</label>
+                    <input type="email" id="login-email" required placeholder="jane@example.com" class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Password</label>
+                    <input type="password" id="login-password" required placeholder="••••••••" class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl shadow transition text-xs">Log In</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="email-verification-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl">
+            <h2 class="text-xl font-black text-slate-900">Confirm your email</h2>
+            <p class="text-xs text-slate-600 mt-2">Enter the confirmation code sent to your email address.</p>
+            <form onsubmit="verifySignupCode(event)" class="mt-4 space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1" for="verify-email">Email address</label>
+                    <input type="email" id="verify-email" required autocomplete="email" class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1" for="verify-email-code">Confirmation code</label>
+                    <input type="text" id="verify-email-code" required inputmode="numeric" autocomplete="one-time-code" maxlength="10" class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl">
+                </div>
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl text-xs">Confirm email</button>
+            </form>
+            <button type="button" onclick="resendSignupCode()" class="mt-3 text-xs font-semibold text-brand-700 hover:text-brand-800">Resend confirmation code</button>
+        </div>
+    </div>
+
+    <div id="age-verification-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl">
+            <h2 class="text-xl font-black text-slate-900">Confirm your age</h2>
+            <p class="text-xs text-slate-600 mt-2">Enter your year of birth to continue. You must be at least 18 years old.</p>
+            <form onsubmit="handleAgeVerification(event)" class="mt-4 space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1" for="verify-birth-year">Year of Birth</label>
+                    <input type="number" id="verify-birth-year" required min="1900" step="1" inputmode="numeric" placeholder="e.g. 1995" class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <p class="text-[11px] text-slate-500">The year-only check uses a conservative age cutoff.</p>
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl shadow transition text-xs">Verify and Continue</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADMIN QUESTION EDITOR (Not exposed in the public client) -->
+    <div id="add-q-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeModal('add-q-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <h2 class="text-xl font-black text-slate-900">Add Survey Question</h2>
+            <form onsubmit="handleAddQuestion(event)" class="mt-4 space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Category</label>
+                    <input type="text" id="new-q-cat" required placeholder="e.g. Kenya & Africa" class="w-full p-2.5 text-xs bg-slate-50 border rounded-xl">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Question Prompt</label>
+                    <textarea id="new-q-text" required rows="2" placeholder="e.g. What is the longest river in Kenya?" class="w-full p-2.5 text-xs bg-slate-50 border rounded-xl"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="text" id="new-q-opt0" required placeholder="Option A" class="p-2 text-xs border rounded-xl">
+                    <input type="text" id="new-q-opt1" required placeholder="Option B" class="p-2 text-xs border rounded-xl">
+                    <input type="text" id="new-q-opt2" required placeholder="Option C" class="p-2 text-xs border rounded-xl">
+                    <input type="text" id="new-q-opt3" required placeholder="Option D" class="p-2 text-xs border rounded-xl">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Correct Option Index (0 to 3)</label>
+                    <select id="new-q-ans" class="w-full p-2 text-xs border rounded-xl">
+                        <option value="0">Option A (0)</option>
+                        <option value="1">Option B (1)</option>
+                        <option value="2">Option C (2)</option>
+                        <option value="3">Option D (3)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Explanation</label>
+                    <input type="text" id="new-q-exp" required placeholder="Short explanation of why this answer is correct" class="w-full p-2 text-xs border rounded-xl">
+                </div>
+                <button type="submit" class="w-full bg-brand-600 text-white font-bold py-3 rounded-xl text-xs">Save Question to Bank</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- LEGAL MODALS -->
+    <div id="modal-terms" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative max-h-[80vh] overflow-y-auto">
+            <button onclick="closeModal('modal-terms')" class="absolute top-4 right-4 text-slate-400"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <h2 class="text-lg font-bold text-slate-900 mb-2">Terms of Service</h2>
+            <div class="text-xs text-slate-600 space-y-2 leading-relaxed">
+                <p>Account registration is free. The quiz in this page is for practice and does not create cash earnings.</p>
+                <p>Only wallet credits verified and posted by a trusted backend may be requested for payout. Never pay an activation, research, or release fee to access or withdraw funds.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-privacy" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative max-h-[80vh] overflow-y-auto">
+            <button onclick="closeModal('modal-privacy')" class="absolute top-4 right-4 text-slate-400"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <h2 class="text-lg font-bold text-slate-900 mb-2">Privacy Policy</h2>
+            <div class="text-xs text-slate-600 space-y-2 leading-relaxed">
+                <p>Account details are stored in the connected Supabase project. Payout destination details are stored with payout requests and should only be processed by authorized staff.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-refund" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative max-h-[80vh] overflow-y-auto">
+            <button onclick="closeModal('modal-refund')" class="absolute top-4 right-4 text-slate-400"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <h2 class="text-lg font-bold text-slate-900 mb-2">Fees & Payouts</h2>
+            <div class="text-xs text-slate-600 space-y-2 leading-relaxed">
+                <p>This site does not collect an activation fee. Payout requests do not require an upfront payment.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-disclosure" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative max-h-[80vh] overflow-y-auto">
+            <button onclick="closeModal('modal-disclosure')" class="absolute top-4 right-4 text-slate-400"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <h2 class="text-lg font-bold text-slate-900 mb-2">Earnings Disclosure</h2>
+            <div class="text-xs text-slate-600 space-y-2 leading-relaxed">
+                <p>Practice quizzes and referral signups do not automatically generate cash. Any future rewards must be clearly disclosed, funded, and verified by a trusted server.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC ENGINE -->
+    <script>
+        // QUESTION BANK (Comprehensive set across 8 categories)
+        const DEFAULT_QUESTIONS = [
+            { id: 1, category: "Kenya & Africa", question: "Which is the highest mountain in Kenya?", options: ["Mount Elgon", "Mount Kenya", "Aberdare Range", "Mount Kilimanjaro"], answer: 1, explanation: "Mount Kenya is the highest mountain in Kenya and second-highest in Africa." },
+            { id: 2, category: "Kenya & Africa", question: "In which year did Kenya attain independence (Madaraka / Uhuru)?", options: ["1960", "1963", "1970", "1958"], answer: 1, explanation: "Kenya gained independence from British rule on December 12, 1963." },
+            { id: 3, category: "Science & Tech", question: "What is the chemical symbol for Gold?", options: ["Ag", "Fe", "Au", "Pb"], answer: 2, explanation: "Au comes from the Latin word for gold, 'Aurum'." },
+            { id: 4, category: "Math & Logic", question: "What is 15% of 2,000 KES?", options: ["300 KES", "200 KES", "150 KES", "400 KES"], answer: 0, explanation: "0.15 * 2000 = 300." },
+            { id: 5, category: "English & Vocabulary", question: "Select the synonym of 'Meticulous':", options: ["Careless", "Thorough", "Rapid", "Lazy"], answer: 1, explanation: "Meticulous means showing great attention to detail or thorough." },
+            { id: 6, category: "Health & Safety", question: "Which vitamin is primarily synthesized when human skin is exposed to sunlight?", options: ["Vitamin A", "Vitamin C", "Vitamin D", "Vitamin B12"], answer: 2, explanation: "Ultraviolet B (UVB) rays trigger vitamin D synthesis in the skin." },
+            { id: 7, category: "Sports", question: "Who holds the official world record for the men's marathon?", options: ["Eliud Kipchoge", "Kelvin Kiptum", "Haile Gebrselassie", "Kenenisa Bekele"], answer: 1, explanation: "Kelvin Kiptum set the world record of 2:00:35 at the Chicago Marathon in 2023." },
+            { id: 8, category: "History & Geography", question: "Which is the largest lake by surface area in Africa?", options: ["Lake Tanganyika", "Lake Turkana", "Lake Victoria", "Lake Malawi"], answer: 2, explanation: "Lake Victoria is Africa's largest lake by surface area." },
+            { id: 9, category: "Business & Finance", question: "What does the abbreviation 'CBK' stand for in Kenya?", options: ["Commercial Bank of Kenya", "Central Bank of Kenya", "Credit Bureau Kenya", "Co-operative Bank of Kenya"], answer: 1, explanation: "Central Bank of Kenya is the monetary authority of Kenya." },
+            { id: 10, category: "Science & Tech", question: "Which unit measure is used for electrical resistance?", options: ["Volt", "Ampere", "Ohm", "Watt"], answer: 2, explanation: "Electrical resistance is measured in Ohms (Ω)." }
+        ];
+
+        // Add the Supabase project URL and publishable anon key here.
+        const SUPABASE_URL = 'https://hkwmjlnlffichjixgooh.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_z_OOHvf7nnv7WJSUXanmbA_-E--l22u';
+        const supabaseConfigured = true;
+
+        let supabaseClient = null;
+        let appData = {
+            currentUser: null,
+            questionBank: [],
+            walletEntries: []
+        };
+        let walletBalance = 0;
+        let referralCount = 0;
+        let quizCount = 0;
+        let pendingSignupEmail = '';
+
+        let currentSurvey = {
+            questions: [],
+            currentIndex: 0,
+            userAnswers: []
+        };
+
+        // INITIALIZATION
+        window.onload = async function() {
+            loadFromStorage();
+            const latestEligibleBirthYear = new Date().getFullYear() - 19;
+            document.getElementById('reg-birth-year').max = latestEligibleBirthYear;
+            document.getElementById('verify-birth-year').max = latestEligibleBirthYear;
+            if (!supabaseConfigured || !window.supabase) {
+                showBackendStatus('Connect your Supabase project to enable accounts, referrals, and payout requests. Quiz practice is not paid work.');
+                updateUI();
+                return;
+            }
+
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            try {
+                const { data, error } = await supabaseClient.auth.getSession();
+                if (error) throw error;
+                await loadCurrentUser(data.session ? data.session.user : null);
+            } catch (error) {
+                showBackendStatus(`Could not connect to Supabase: ${error.message}`);
+                updateUI();
+            }
+
+            supabaseClient.auth.onAuthStateChange((event, session) => {
+                setTimeout(() => {
+                    loadCurrentUser(session ? session.user : null).catch(error => {
+                        showToast(`Could not load your account: ${error.message}`, 'error');
+                    });
+                }, 0);
+            });
+        };
+
+        function saveToStorage() {
+            localStorage.setItem('jazapesa_question_bank_v1', JSON.stringify(appData.questionBank));
+        }
+
+        function loadFromStorage() {
+            const raw = localStorage.getItem('jazapesa_question_bank_v1');
+            if (raw) {
+                try {
+                    appData.questionBank = JSON.parse(raw);
+                } catch (error) {
+                    console.error('Could not read the saved question bank.', error);
+                    showToast('Saved quiz questions could not be loaded.', 'error');
+                }
+            }
+            const legacyRaw = localStorage.getItem('jazapesa_data_v2');
+            if (legacyRaw) {
+                if (!raw) {
+                    try {
+                        const legacyData = JSON.parse(legacyRaw);
+                        if (Array.isArray(legacyData.questionBank)) {
+                            appData.questionBank = legacyData.questionBank;
+                        }
+                    } catch (error) {
+                        console.error('Could not migrate the legacy question bank.', error);
+                        showToast('Old local account data was discarded; saved questions could not be migrated.', 'error');
+                    }
+                }
+                localStorage.removeItem('jazapesa_data_v2');
+                if (!raw && appData.questionBank.length > 0) saveToStorage();
+            }
+            if (!appData.questionBank || appData.questionBank.length === 0) {
+                appData.questionBank = [...DEFAULT_QUESTIONS];
+            }
+        }
+
+        function showBackendStatus(message) {
+            const status = document.getElementById('backend-status');
+            status.textContent = message;
+            status.classList.remove('hidden');
+        }
+
+        function requireSupabase() {
+            if (!supabaseClient) {
+                showToast('Supabase is not configured. See the setup instructions.', 'error');
+                return false;
+            }
+            return true;
+        }
+
+        async function loadCurrentUser(authUser) {
+            appData.currentUser = null;
+            appData.walletEntries = [];
+            walletBalance = 0;
+            referralCount = 0;
+
+            if (!authUser) {
+                updateUI();
+                return;
+            }
+
+            const { data: profile, error: profileError } = await supabaseClient
+                .from('profiles')
+                .select('id, display_name, phone, birth_year, referral_code')
+                .eq('id', authUser.id)
+                .single();
+            if (profileError) throw profileError;
+
+            appData.currentUser = {
+                id: profile.id,
+                email: authUser.email,
+                name: profile.display_name || authUser.email.split('@')[0],
+                phone: profile.phone,
+                birthYear: profile.birth_year,
+                refCode: profile.referral_code
+            };
+            if (profile.birth_year === null) {
+                updateUI();
+                openModal('age-verification-modal');
+                return;
+            }
+
+            const [
+                { data: balance, error: balanceError },
+                { count, error: referralError },
+                { data: entries, error: entriesError }
+            ] = await Promise.all([
+                supabaseClient.rpc('wallet_balance'),
+                supabaseClient.from('referrals').select('id', { count: 'exact', head: true }).eq('referrer_id', authUser.id),
+                supabaseClient.from('wallet_entries')
+                    .select('id, amount, entry_type, description, created_at')
+                    .eq('user_id', authUser.id)
+                    .order('created_at', { ascending: false })
+                    .limit(5)
+            ]);
+
+            if (balanceError) throw balanceError;
+            if (referralError) throw referralError;
+            if (entriesError) throw entriesError;
+
+            walletBalance = Number(balance);
+            referralCount = count || 0;
+            appData.walletEntries = entries || [];
+            updateUI();
+        }
+
+        // NAVIGATION CONTROL
+        function navigateTo(viewId) {
+            const allowedViews = ['dashboard', 'surveys', 'referrals', 'withdrawals'];
+            if (!allowedViews.includes(viewId)) return;
+            if (viewId !== 'dashboard' && appData.currentUser && !appData.currentUser.birthYear) {
+                openModal('age-verification-modal');
+                return;
+            }
+
+            allowedViews.forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                if (el) el.classList.add('hidden');
+                
+                const navBtn = document.getElementById(`nav-btn-${v}`);
+                if (navBtn) {
+                    navBtn.classList.remove('text-brand-400', 'border-brand-500');
+                    navBtn.classList.add('text-slate-400', 'border-transparent');
+                }
+            });
+
+            const activeView = document.getElementById(`view-${viewId}`);
+            if (activeView) activeView.classList.remove('hidden');
+
+            const activeNav = document.getElementById(`nav-btn-${viewId}`);
+            if (activeNav) {
+                activeNav.classList.remove('text-slate-400', 'border-transparent');
+                activeNav.classList.add('text-brand-400', 'border-brand-500');
+            }
+
+            if (viewId === 'surveys') renderSurveyState();
+            if (viewId === 'withdrawals') renderWithdrawalEligibility();
+        }
+
+        // Supabase Auth and server-backed profiles.
+        async function handleRegister(e) {
+            e.preventDefault();
+            if (!requireSupabase()) return;
+
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+            const birthYearValue = document.getElementById('reg-birth-year').value;
+            const birthYear = Number(birthYearValue);
+            const password = document.getElementById('reg-password').value;
+            const referralInput = document.getElementById('reg-refcode').value.trim()
+                || new URLSearchParams(window.location.search).get('ref')
+                || '';
+
+            const latestEligibleBirthYear = new Date().getFullYear() - 19;
+            if (!/^\d{4}$/.test(birthYearValue)
+                || !Number.isInteger(birthYear)
+                || birthYear < 1900
+                || birthYear > latestEligibleBirthYear) {
+                showToast('You must be at least 18 years old to register.', 'error');
+                return;
+            }
+
+            const submitButton = e.submitter;
+            if (submitButton) submitButton.disabled = true;
+            try {
+                const { data, error } = await supabaseClient.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: {
+                            display_name: name,
+                            phone,
+                            birth_year: birthYear,
+                            referral_code: referralInput.toUpperCase()
+                        }
+                    }
+                });
+                if (error) throw error;
+                if (data.session) {
+                    await supabaseClient.auth.signOut();
+                    throw new Error('Email confirmation is not enforced by this Supabase project. Enable email confirmations in Supabase Auth settings, then try again.');
+                }
+                pendingSignupEmail = email;
+                document.getElementById('verify-email').value = email;
+                closeModal('register-modal');
+                openModal('email-verification-modal');
+                showToast('Confirmation code sent. Check your email.', 'success');
+            } catch (error) {
+                showToast(`Registration failed: ${error.message}`, 'error');
+            } finally {
+                if (submitButton) submitButton.disabled = false;
+            }
+        }
+
+        async function verifySignupCode(e) {
+            e.preventDefault();
+            if (!requireSupabase()) return;
+
+            const email = document.getElementById('verify-email').value.trim();
+            const token = document.getElementById('verify-email-code').value.trim();
+            try {
+                const { data, error } = await supabaseClient.auth.verifyOtp({
+                    email,
+                    token,
+                    type: 'signup'
+                });
+                if (error) throw error;
+                pendingSignupEmail = '';
+                closeModal('email-verification-modal');
+                await loadCurrentUser(data.user);
+                showToast('Email confirmed. Your account is ready.', 'success');
+            } catch (error) {
+                showToast(`Email confirmation failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function resendSignupCode() {
+            if (!requireSupabase()) return;
+            const email = document.getElementById('verify-email').value.trim() || pendingSignupEmail;
+            if (!email) {
+                showToast('Enter the email address used to register.', 'error');
+                return;
+            }
+
+            try {
+                const { error } = await supabaseClient.auth.resend({ type: 'signup', email });
+                if (error) throw error;
+                pendingSignupEmail = email;
+                showToast('A new confirmation code was sent.', 'success');
+            } catch (error) {
+                showToast(`Could not resend the code: ${error.message}`, 'error');
+            }
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            if (!requireSupabase()) return;
+
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+                await loadCurrentUser(data.user);
+                closeModal('login-modal');
+                showToast(`Welcome back, ${data.user.email}!`, 'success');
+            } catch (error) {
+                showToast(`Sign in failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function handleAgeVerification(e) {
+            e.preventDefault();
+            if (!appData.currentUser || !requireSupabase()) return;
+
+            const yearValue = document.getElementById('verify-birth-year').value;
+            const year = Number(yearValue);
+            if (!/^\d{4}$/.test(yearValue)
+                || !Number.isInteger(year)
+                || year < 1900
+                || year > new Date().getFullYear() - 19) {
+                showToast('You must be at least 18 years old to continue.', 'error');
+                return;
+            }
+
+            try {
+                const { error } = await supabaseClient.rpc('verify_birth_year', {
+                    submitted_birth_year: year
+                });
+                if (error) throw error;
+
+                const { data: authData, error: authError } = await supabaseClient.auth.getUser();
+                if (authError) throw authError;
+                await loadCurrentUser(authData.user);
+                closeModal('age-verification-modal');
+                showToast('Age verified.', 'success');
+            } catch (error) {
+                showToast(`Age verification failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function logout() {
+            if (!requireSupabase()) return;
+            const { error } = await supabaseClient.auth.signOut();
+            if (error) {
+                showToast(`Could not sign out: ${error.message}`, 'error');
+                return;
+            }
+            await loadCurrentUser(null);
+            showToast('Signed out.', 'info');
+        }
+
+        // SURVEY ENGINE
+        function renderSurveyState() {
+            const u = appData.currentUser;
+            const lockedState = document.getElementById('survey-locked-state');
+            const readyState = document.getElementById('survey-ready-state');
+            const sessionState = document.getElementById('survey-session-state');
+            const resultState = document.getElementById('survey-result-state');
+
+            [lockedState, readyState, sessionState, resultState].forEach(el => el.classList.add('hidden'));
+
+            if (!u || !u.birthYear) {
+                lockedState.classList.remove('hidden');
+                return;
+            }
+
+            readyState.classList.remove('hidden');
+        }
+
+        function startSurveySession() {
+            // Select 5 random questions
+            const bank = [...appData.questionBank];
+            const shuffled = bank.sort(() => 0.5 - Math.random()).slice(0, 5);
+
+            currentSurvey = {
+                questions: shuffled,
+                currentIndex: 0,
+                userAnswers: new Array(5).fill(null)
+            };
+
+            document.getElementById('survey-ready-state').classList.add('hidden');
+            document.getElementById('survey-session-state').classList.remove('hidden');
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const q = currentSurvey.questions[currentSurvey.currentIndex];
+            document.getElementById('survey-current-q-num').innerText = currentSurvey.currentIndex + 1;
+            document.getElementById('survey-q-category').innerText = q.category;
+            document.getElementById('survey-q-text').innerText = q.question;
+
+            const progressPct = ((currentSurvey.currentIndex + 1) / 5) * 100;
+            document.getElementById('survey-progress-bar').style.width = `${progressPct}%`;
+
+            const optionsContainer = document.getElementById('survey-options-container');
+            optionsContainer.innerHTML = '';
+
+            q.options.forEach((opt, idx) => {
+                const selected = currentSurvey.userAnswers[currentSurvey.currentIndex] === idx;
+                const btn = document.createElement('button');
+                btn.className = `w-full text-left p-4 rounded-xl border text-sm font-medium transition flex items-center justify-between ${
+                    selected ? 'bg-brand-50 border-brand-500 text-brand-800 font-bold' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
+                }`;
+                btn.onclick = () => selectOption(idx);
+                btn.innerHTML = `
+                    <span>${opt}</span>
+                    ${selected ? '<i class="fa-solid fa-circle-check text-brand-600"></i>' : '<i class="fa-regular fa-circle text-slate-300"></i>'}
+                `;
+                optionsContainer.appendChild(btn);
+            });
+
+            document.getElementById('survey-prev-btn').disabled = currentSurvey.currentIndex === 0;
+            document.getElementById('survey-next-btn').innerText = currentSurvey.currentIndex === 4 ? 'Submit Task &rarr;' : 'Next Question &rarr;';
+        }
+
+        function selectOption(index) {
+            currentSurvey.userAnswers[currentSurvey.currentIndex] = index;
+            renderQuestion();
+        }
+
+        function prevQuestion() {
+            if (currentSurvey.currentIndex > 0) {
+                currentSurvey.currentIndex--;
+                renderQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            if (currentSurvey.userAnswers[currentSurvey.currentIndex] === null) {
+                showToast('Please select an option before continuing', 'warning');
+                return;
+            }
+
+            if (currentSurvey.currentIndex < 4) {
+                currentSurvey.currentIndex++;
+                renderQuestion();
+            } else {
+                evaluateSurvey();
+            }
+        }
+
+        function evaluateSurvey() {
+            let correctCount = 0;
+            currentSurvey.questions.forEach((q, idx) => {
+                if (currentSurvey.userAnswers[idx] === q.answer) {
+                    correctCount++;
+                }
+            });
+
+            const isPerfect = correctCount === 5;
+            quizCount += 1;
+
+            document.getElementById('survey-session-state').classList.add('hidden');
+            const resultState = document.getElementById('survey-result-state');
+            resultState.classList.remove('hidden');
+
+            const banner = document.getElementById('survey-result-banner');
+            if (isPerfect) {
+                banner.className = "p-6 rounded-2xl text-center space-y-2 bg-emerald-50 border border-emerald-200 text-emerald-900";
+                banner.innerHTML = `
+                    <div class="w-12 h-12 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xl mx-auto"><i class="fa-solid fa-check"></i></div>
+                    <h3 class="text-xl font-extrabold">Perfect practice score!</h3>
+                    <p class="text-xs text-emerald-700">Excellent work! Practice results do not create cash rewards.</p>
+                `;
+            } else {
+                banner.className = "p-6 rounded-2xl text-center space-y-2 bg-rose-50 border border-rose-200 text-rose-900";
+                banner.innerHTML = `
+                    <div class="w-12 h-12 rounded-full bg-rose-500 text-white flex items-center justify-center font-bold text-xl mx-auto"><i class="fa-solid fa-xmark"></i></div>
+                    <h3 class="text-xl font-extrabold">Score: ${correctCount}/5 - Task Unsuccessful</h3>
+                    <p class="text-xs text-rose-700">Review the answers below and try another practice session.</p>
+                `;
+            }
+
+            const reviewContainer = document.getElementById('survey-review-container');
+            reviewContainer.innerHTML = '';
+
+            currentSurvey.questions.forEach((q, idx) => {
+                const userAns = currentSurvey.userAnswers[idx];
+                const isAnsCorrect = userAns === q.answer;
+
+                const item = document.createElement('div');
+                item.className = `p-4 rounded-xl border text-xs space-y-1 ${isAnsCorrect ? 'bg-emerald-50/50 border-emerald-200' : 'bg-rose-50/50 border-rose-200'}`;
+                item.innerHTML = `
+                    <p class="font-bold text-slate-900">Q${idx + 1}: ${q.question}</p>
+                    <p class="text-slate-600">Your choice: <strong class="${isAnsCorrect ? 'text-emerald-700' : 'text-rose-700'}">${q.options[userAns]}</strong></p>
+                    ${!isAnsCorrect ? `<p class="text-emerald-700 font-semibold">Correct choice: ${q.options[q.answer]}</p>` : ''}
+                    <p class="text-slate-500 italic mt-1">${q.explanation}</p>
+                `;
+                reviewContainer.appendChild(item);
+            });
+
+            updateUI();
+        }
+
+        function startNewSurvey() {
+            renderSurveyState();
+        }
+
+        // Referral links and persisted signup counts.
+        function copyReferralLink() {
+            if (!appData.currentUser || !appData.currentUser.birthYear) {
+                showToast('Verify your age to access your referral link.', 'warning');
+                return;
+            }
+            const text = document.getElementById('ref-link-display').innerText;
+            if (!navigator.clipboard) {
+                showToast('Clipboard access is unavailable. Copy the displayed link manually.', 'error');
+                return;
+            }
+            navigator.clipboard.writeText(text)
+                .then(() => showToast('Referral link copied to clipboard.', 'success'))
+                .catch(error => showToast(`Could not copy the link: ${error.message}`, 'error'));
+        }
+
+        function shareWhatsApp() {
+            const u = appData.currentUser;
+            if (!u || !u.birthYear) {
+                if (u) {
+                    showToast('Verify your age to access your referral link.', 'warning');
+                    return;
+                }
+                openModal('login-modal');
+                return;
+            }
+            const referralUrl = `${window.location.origin}${window.location.pathname}?ref=${encodeURIComponent(u.refCode)}`;
+            const url = `https://wa.me/?text=${encodeURIComponent(`Try JazaPesa practice quizzes. Join for free: ${referralUrl}`)}`;
+            window.open(url, '_blank');
+        }
+
+        // WITHDRAWAL ENGINE
+        function renderWithdrawalEligibility() {
+            document.getElementById('with-crit-bal-label').innerText = `KES ${walletBalance.toLocaleString()}`;
+            document.getElementById('with-crit-bal-bar').style.width = walletBalance > 0 ? '100%' : '0%';
+            document.getElementById('with-crit-ref-label').innerText = 'No fee';
+            const submitBtn = document.getElementById('with-submit-btn');
+            submitBtn.disabled = !supabaseClient || !appData.currentUser || !appData.currentUser.birthYear || walletBalance <= 0;
+        }
+
+        function togglePayoutFields() {
+            const method = document.getElementById('with-method').value;
+            const mpesaField = document.getElementById('with-mpesa-field');
+            const bankFields = document.getElementById('with-bank-fields');
+
+            if (method === 'mpesa') {
+                mpesaField.classList.remove('hidden');
+                bankFields.classList.add('hidden');
+            } else {
+                mpesaField.classList.add('hidden');
+                bankFields.classList.remove('hidden');
+            }
+        }
+
+        async function handleWithdrawalSubmit(e) {
+            e.preventDefault();
+            const u = appData.currentUser;
+            if (!u || !u.birthYear || !requireSupabase()) return;
+
+            const amount = Number(document.getElementById('with-amount').value);
+            const method = document.getElementById('with-method').value;
+            const destination = method === 'mpesa'
+                ? document.getElementById('with-phone').value.trim()
+                : `${document.getElementById('with-bank-name').value}: ${document.getElementById('with-account-num').value.trim()}`;
+
+            if (!Number.isSafeInteger(amount) || amount <= 0 || amount > walletBalance) {
+                showToast('Enter a whole-number amount within your available balance.', 'error');
+                return;
+            }
+            if (destination.length < 4) {
+                showToast('Enter a valid payout destination.', 'error');
+                return;
+            }
+
+            try {
+                const { data: requestId, error } = await supabaseClient.rpc('request_payout', {
+                    requested_amount: amount,
+                    payout_method: method,
+                    payout_destination: destination
+                });
+                if (error) throw error;
+                document.getElementById('withdrawal-form').reset();
+                togglePayoutFields();
+                await loadCurrentUser(u);
+                showToast(`Payout request ${requestId} submitted. No release fee is required.`, 'success');
+            } catch (error) {
+                showToast(`Payout request failed: ${error.message}`, 'error');
+            }
+        }
+
+        function toggleAdminMode() {
+            showToast('Admin tools must use a protected server-side role, not a browser toggle.', 'warning');
+        }
+
+        function switchAdminTab() {
+            showToast('Admin tools are not available in the public client.', 'warning');
+        }
+
+        function renderAdminDashboard() {
+            return;
+        }
+
+        function updateWithdrawalStatus() {
+            showToast('Payout status can only be changed by an authorized backend operator.', 'error');
+        }
+
+        function handleAddQuestion(e) {
+            e.preventDefault();
+            const category = document.getElementById('new-q-cat').value;
+            const question = document.getElementById('new-q-text').value;
+            const opt0 = document.getElementById('new-q-opt0').value;
+            const opt1 = document.getElementById('new-q-opt1').value;
+            const opt2 = document.getElementById('new-q-opt2').value;
+            const opt3 = document.getElementById('new-q-opt3').value;
+            const answer = parseInt(document.getElementById('new-q-ans').value);
+            const explanation = document.getElementById('new-q-exp').value;
+
+            const newQ = {
+                id: Date.now(),
+                category,
+                question,
+                options: [opt0, opt1, opt2, opt3],
+                answer,
+                explanation
+            };
+
+            appData.questionBank.push(newQ);
+            saveToStorage();
+
+            closeModal('add-q-modal');
+            showToast('New question saved to bank', 'success');
+            renderAdminDashboard();
+        }
+
+        function deleteQuestion(qId) {
+            appData.questionBank = appData.questionBank.filter(q => q.id !== qId);
+            saveToStorage();
+            showToast('Question deleted', 'info');
+            renderAdminDashboard();
+        }
+
+        // GLOBAL UI REFRESH
+        function updateUI() {
+            const u = appData.currentUser;
+            const balanceText = `KES ${walletBalance.toLocaleString()}`;
+            document.getElementById('header-balance').innerText = balanceText;
+            document.getElementById('mobile-balance').innerText = balanceText;
+            document.getElementById('dash-balance').innerText = balanceText;
+            document.getElementById('header-streak-count').innerText = quizCount;
+            document.getElementById('mobile-streak-count').innerText = quizCount;
+            document.getElementById('dash-streak').innerText = `${quizCount} sessions`;
+            document.getElementById('dash-completed-tasks').innerText = quizCount;
+            document.getElementById('dash-active-referrals').innerText = referralCount;
+            if (u) {
+                document.getElementById('auth-buttons-unauth').classList.add('hidden');
+                document.getElementById('auth-buttons-auth').classList.remove('hidden');
+
+                document.getElementById('header-username').innerText = u.name;
+                document.getElementById('dropdown-user-email').innerText = u.email;
+                document.getElementById('user-avatar-text').innerText = (u.name || u.email).charAt(0).toUpperCase();
+                document.getElementById('dash-user-name').innerText = (u.name || u.email).split(' ')[0];
+                document.getElementById('ref-link-display').innerText = u.birthYear
+                    ? `${window.location.origin}${window.location.pathname}?ref=${encodeURIComponent(u.refCode)}`
+                    : 'Verify your age to access your referral link.';
+                document.getElementById('ref-stat-total').innerText = referralCount;
+
+                const ledgerContainer = document.getElementById('dash-recent-ledger');
+                ledgerContainer.innerHTML = '';
+                if (appData.walletEntries.length > 0) {
+                    appData.walletEntries.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = "flex items-center justify-between p-2.5 bg-slate-50 rounded-xl text-xs";
+                        const details = document.createElement('div');
+                        const title = document.createElement('p');
+                        title.className = 'font-bold text-slate-800';
+                        title.textContent = item.description || item.entry_type;
+                        const date = document.createElement('span');
+                        date.className = 'text-[10px] text-slate-400';
+                        date.textContent = new Date(item.created_at).toLocaleString();
+                        details.append(title, date);
+                        const amount = document.createElement('span');
+                        amount.className = `font-extrabold ${item.amount > 0 ? 'text-emerald-600' : 'text-rose-600'}`;
+                        amount.textContent = `${item.amount > 0 ? '+' : ''}KES ${Number(item.amount).toLocaleString()}`;
+                        div.append(details, amount);
+                        ledgerContainer.appendChild(div);
+                    });
+                } else {
+                    ledgerContainer.innerHTML = '<p class="text-xs text-slate-400 italic">No verified wallet activity.</p>';
+                }
+
+            } else {
+                document.getElementById('auth-buttons-unauth').classList.remove('hidden');
+                document.getElementById('auth-buttons-auth').classList.add('hidden');
+                document.getElementById('dash-user-name').innerText = 'Guest';
+                document.getElementById('ref-link-display').innerText = 'Sign in to get your referral link.';
+                document.getElementById('ref-stat-total').innerText = '0';
+                document.getElementById('dash-recent-ledger').innerHTML =
+                    '<p class="text-xs text-slate-400 italic">Sign in to view verified wallet activity.</p>';
+            }
+
+            renderWithdrawalEligibility();
+        }
+
+        // UTILITY FUNCTIONS
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+
+            const bgClass = type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-rose-600' : type === 'warning' ? 'bg-amber-600' : 'bg-slate-800';
+
+            toast.className = `${bgClass} text-white px-4 py-3 rounded-xl shadow-2xl text-xs font-semibold flex items-center justify-between pointer-events-auto animate-bounce`;
+            toast.innerHTML = `
+                <span>${message}</span>
+                <button onclick="this.parentElement.remove()" class="ml-3 text-slate-200"><i class="fa-solid fa-xmark"></i></button>
+                 `;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                if (toast.parentElement) toast.remove();
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
